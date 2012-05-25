@@ -134,6 +134,76 @@ describe Capybara::Driver::Webkit::Browser do
     end
   end
 
+  describe "basic auth" do
+    before do
+      @host = '127.0.0.1'
+      @user = 'user'
+      @password = 'password'
+
+      @server = TCPServer.new(@host, 0)
+      @port = @server.addr[1]
+      @server_thread = Thread.new(@server) do |serv|
+        while conn = serv.accept do
+          request = []
+          until (line = conn.readline.strip).empty?
+            request << line
+          end
+
+          request_lines = request.dup
+          response = request_lines.shift
+          @headers = {}
+          while (line = request_lines.shift || "").strip != ""
+            header, value = line.split(": ", 2)
+            @headers[header] = value
+          end
+
+          if @headers["Authorization"]
+            html = "<html><head></head><body>Ok</body></html>"
+            conn.write "HTTP/1.1 200 OK\r\n"
+            conn.write "Content-Type:text/html\r\n"
+            conn.write "Content-Length: %i\r\n" % html.size
+            conn.write "\r\n"
+            conn.write html
+            conn.write "\r\n\r\n"
+            conn.close
+          else
+            html = <<-HTML
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+<HTML>
+  <HEAD>
+    <TITLE>Error</TITLE>
+    <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=ISO-8859-1">
+  </HEAD>
+  <BODY><H1>401 Unauthorized.</H1></BODY>
+</HTML>
+            HTML
+
+            conn.write "HTTP/1.1 401 Authorization Required\r\n"
+            conn.write "Content-Type:text/html\r\n"
+            conn.write "Content-Length: %i\r\n" % html.size
+            conn.write %{WWW-Authenticate: Basic realm="Secure Area"\r\n}
+            conn.write "\r\n"
+            conn.write html
+            conn.write "\r\n\r\n"
+            conn.close
+          end
+        end
+      end
+    end
+
+    after(:each) do
+      @server_thread.kill
+      @server.close
+    end
+
+    it "can authenticate a request" do
+      browser.authenticate('user', 'password')
+      browser.visit("http://#{@host}:#{@port}/")
+      @headers["Authorization"].should == "Basic "+Base64.encode64("user:password").strip
+    end
+  end
+
   describe "forking", :skip_on_windows => true do
     it "only shuts down the server from the main process" do
       browser.reset!

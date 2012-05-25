@@ -2,6 +2,7 @@ TEMPLATE = app
 TARGET = webkit_server
 DESTDIR = .
 HEADERS = \
+  Authenticate.h \
   IgnoreSslErrors.h \
   ResizeWindow.h \
   CurrentUrl.h \
@@ -41,6 +42,7 @@ HEADERS = \
   SetSkipImageLoading.h \
 
 SOURCES = \
+  Authenticate.cpp \
   IgnoreSslErrors.cpp \
   ResizeWindow.cpp \
   CurrentUrl.cpp \
