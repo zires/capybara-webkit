@@ -37,12 +37,9 @@ void NetworkAccessManager::setPassword(const QString &password) {
   m_password = password;
 }
 
+
 void NetworkAccessManager::provideAuthentication(QNetworkReply *reply, QAuthenticator *authenticator) {
   Q_UNUSED(reply);
-  std::ofstream out;
-  out.open("/tmp/foo");
-  out << "Setting: " << m_userName.toUtf8().constData() << ":" << m_password.toUtf8().constData();
-  out.close();
   authenticator->setUser(m_userName);
   authenticator->setPassword(m_password);
 }
