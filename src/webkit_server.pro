@@ -110,6 +110,6 @@ SOURCES = \
 
 RESOURCES = webkit_server.qrc
 QT += network webkit
-CONFIG += console
+CONFIG += console debug/release debug
 CONFIG -= app_bundle
 
