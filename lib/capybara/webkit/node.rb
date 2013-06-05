@@ -126,23 +126,7 @@ module Capybara::Webkit
     end
 
     def invoke(name, *args)
-      if allow_unattached_nodes? || attached?
-        browser.command "Node", name, native, *args
-      else
-        raise Capybara::Webkit::NodeNotAttachedError
-      end
-    end
-
-    def allow_unattached_nodes?
-      !automatic_reload?
-    end
-
-    def automatic_reload?
-      Capybara.respond_to?(:automatic_reload) && Capybara.automatic_reload
-    end
-
-    def attached?
-      browser.command("Node", "isAttached", native) == "true"
+      browser.command "Node", name, native, *args
     end
 
     def browser

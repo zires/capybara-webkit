@@ -2322,6 +2322,36 @@ describe Capybara::Webkit::Driver do
     end
   end
 
+  context "unattached nodes" do
+    let(:driver) do
+      driver_for_html(<<-HTML)
+        <html>
+          <body>
+            <div id="removeMe">Hello</div>
+            <a href="#" id="remove">Remove</a>
+            <script>
+              (function () {
+                var link = document.getElementById("remove");
+                link.addEventListener("click", function () {
+                  var element = document.getElementById('removeMe');
+                  element.parentNode.removeChild(element);
+                });
+              })();
+            </script>
+          </body>
+        </html>
+      HTML
+    end
+
+    it "raises an unattached node error" do
+      visit '/'
+      node = driver.find_xpath('//div').first
+      driver.find_xpath('//a').first.click
+      expect { node.click }.
+        to raise_error(Capybara::Webkit::NodeNotAttachedError)
+    end
+  end
+
   def driver_url(driver, path)
     URI.parse(driver.current_url).merge(path).to_s
   end
