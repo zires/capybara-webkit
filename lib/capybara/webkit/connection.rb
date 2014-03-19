@@ -52,7 +52,7 @@ module Capybara::Webkit
     end
 
     def open_pipe
-      _, @pipe_stdout, @pipe_stderr, @wait_thr = Open3.popen3(SERVER_PATH)
+      @pipe_stdin, @pipe_stdout, @pipe_stderr, @wait_thr = Open3.popen3(SERVER_PATH)
       register_shutdown_hook
     end
 
@@ -71,8 +71,16 @@ module Capybara::Webkit
       else
         Process.kill("INT", @pid)
       end
+      close_all_streams
     rescue Errno::ESRCH
       # This just means that the webkit_server process has already ended
+    end
+
+    # close all the streams
+    def close_all_streams
+      [@pipe_stdin, @pipe_stdout, @pipe_stderr, @socket].each do |stream|
+        stream.close unless stream.closed?
+      end
     end
 
     def discover_port
